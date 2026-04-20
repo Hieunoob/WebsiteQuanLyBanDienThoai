@@ -3,8 +3,8 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
-use App\Models\Order;
-use App\Models\OrderItem;
+use App\Http\Models\Order;
+use App\Http\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,7 +43,7 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Auth::user()->orders()->latest()->get();
-        return view('orders.index', compact('orders'));
+        return view('customer.orders.index', compact('orders'));
     }
 
     public function show(Order $order)
@@ -54,6 +54,6 @@ class OrderController extends Controller
         }
 
         $order->load('items.product');
-        return view('orders.show', compact('order'));
+        return view('customer.orders.show', compact('order'));
     }
 }

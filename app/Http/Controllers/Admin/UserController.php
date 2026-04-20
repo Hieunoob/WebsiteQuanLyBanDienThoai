@@ -23,6 +23,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'role' => 'required|in:customer,admin',
             'password' => [
                 'required',
                 'confirmed',
@@ -36,6 +37,8 @@ class UserController extends Controller
             'email.unique' => 'Địa chỉ Email này đã được đăng ký bởi người khác!',
             'name.required' => 'Vui lòng nhập họ tên.',
             'email.required' => 'Vui lòng nhập địa chỉ email.',
+            'role.required' => 'Vui lòng chọn vai trò.',
+            'role.in' => 'Vai trò không hợp lệ.',
         
         // Thông báo cho Password (Dùng đúng cái key 'password.confirmed')
         'password.required' => 'Vui lòng nhập mật khẩu.',
@@ -52,6 +55,7 @@ class UserController extends Controller
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'role' => $request->role,
             'password' => Hash::make($request->password),
         ]);
 
@@ -66,6 +70,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
+            'role' => 'required|in:customer,admin',
             'password' => $request->filled('password') ? [
                 'confirmed',
                 Password::min(8)->letters()->mixedCase()->numbers()->symbols(),
@@ -73,11 +78,13 @@ class UserController extends Controller
             
         ],[
         'email.unique' => 'Địa chỉ Email này đã được đăng ký bởi người khác!',
-        
+        'role.required' => 'Vui lòng chọn vai trò.',
+        'role.in' => 'Vai trò không hợp lệ.',
          ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->role = $request->role;
         
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);

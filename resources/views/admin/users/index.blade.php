@@ -23,6 +23,7 @@
                         <th>STT</th>
                         <th>Họ tên</th>
                         <th>Email</th>
+                        <th>Vai trò</th>
                         <th>Ngày tạo</th>
                         <th width="150">Thao tác</th>
                     </tr>
@@ -33,6 +34,11 @@
                         <td>{{ $key + 1 }}</td>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
+                        <td>
+                            <span class="badge {{ $user->role == 'admin' ? 'bg-danger' : 'bg-primary' }}">
+                                {{ $user->role == 'admin' ? 'Quản trị viên' : 'Khách hàng' }}
+                            </span>
+                        </td>
                         <td>{{ $user->created_at->format('d/m/Y') }}</td>
                         <td>
                             <a href="{{ route('users.edit', $user->id) }}" class="btn btn-warning btn-sm">

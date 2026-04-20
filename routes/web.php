@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Customer\ProductController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\OrderController;
@@ -18,22 +19,25 @@ use App\Models\User;
 use App\Http\Controllers\Admin\AdminDashboardController;
 
 // --- NHÓM ROUTE CHO ADMIN ---
-// --- NHÓM ROUTE CHO ADMIN ---
-Route::prefix('admin')->group(function () {
+
+Route::prefix('admin')->middleware('admin')->group(function () {
     Route::get('/', function () {
         $productCount = \App\Models\Product::count();
         $categoryCount = \App\Models\Category::count();
         $userCount = \App\Models\User::count();
+        $orderCount = \App\Http\Models\Order::count();
         $categories = \App\Models\Category::withCount('products')->get();
         $chartLabels = $categories->pluck('name'); 
         $chartData = $categories->pluck('products_count'); 
 
-        return view('admin.dashboard', compact('productCount', 'categoryCount','userCount','chartLabels','chartData'));
+        return view('admin.dashboard', compact('productCount', 'categoryCount','userCount','orderCount','chartLabels','chartData'));
     })->name('admin.dashboard');
 
     Route::resource('products', AdminProductController::class);
     Route::resource('categories', CategoryController::class);
     Route::resource('users', UserController::class);
+    Route::resource('orders', AdminOrderController::class);
+    Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
 });
 
 // --- NHÓM ROUTE CHO KHÁCH HÀNG (NGOÀI AUTH) ---

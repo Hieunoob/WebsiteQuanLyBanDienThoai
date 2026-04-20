@@ -19,6 +19,15 @@
                 @error('email') <small class="text-danger">{{ $message }}</small> @enderror
             </div>
 
+            <div class="mb-3">
+                <label>Vai trò</label>
+                <select name="role" class="form-control" required>
+                    <option value="customer" {{ $user->role == 'customer' ? 'selected' : '' }}>Khách hàng</option>
+                    <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Quản trị viên</option>
+                </select>
+                @error('role') <small class="text-danger">{{ $message }}</small> @enderror
+            </div>
+
             <div class="mb-3 border p-3 rounded bg-light">
                 <label class="fw-bold">Đổi mật khẩu mới</label>
                 <input type="password" name="password" class="form-control mt-2" placeholder="Để trống nếu không muốn đổi">

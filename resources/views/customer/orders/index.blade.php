@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('customer.layouts.app')
 
 @section('content')
 <h1 class="text-3xl font-bold mb-6">Lịch sử đơn hàng</h1>

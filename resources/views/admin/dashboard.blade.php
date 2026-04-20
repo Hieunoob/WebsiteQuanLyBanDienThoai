@@ -52,7 +52,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {{ Request::is('admin/orders*') ? 'active' : '' }}" href="{{ route('orders.index') }}">
                             <i class="bi bi-cart me-2"></i> Đơn hàng
                         </a>
                     </li>
@@ -116,6 +116,17 @@
                                         <div class="display-6 fw-bold">{{ $categoryCount ?? 0 }}</div>
                                     </div>
                                     <i class="bi bi-tags fs-1 opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card bg-info text-white mb-4 shadow-sm">
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="small text-white-50">Đơn hàng</div>
+                                        <div class="display-6 fw-bold">{{ $orderCount ?? 0 }}</div>
+                                    </div>
+                                    <i class="bi bi-cart fs-1 opacity-50"></i>
                                 </div>
                             </div>
                         </div>

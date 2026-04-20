@@ -22,6 +22,10 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard')->with('success', 'Đăng nhập thành công!');
+            }
             return redirect()->route('customer.home')->with('success', 'Đăng nhập thành công!');
         }
 

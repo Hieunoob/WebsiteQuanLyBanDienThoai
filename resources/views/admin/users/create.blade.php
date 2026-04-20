@@ -18,6 +18,15 @@
             </div>
 
             <div class="mb-3">
+                <label>Vai trò</label>
+                <select name="role" class="form-control" required>
+                    <option value="customer" {{ old('role') == 'customer' ? 'selected' : '' }}>Khách hàng</option>
+                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Quản trị viên</option>
+                </select>
+                @error('role') <small class="text-danger">{{ $message }}</small> @enderror
+            </div>
+
+            <div class="mb-3">
                 <label>Mật khẩu</label>
                 <input type="password" name="password" class="form-control" required>
                 <small class="text-muted">Tối thiểu 8 ký tự, gồm: Chữ hoa, chữ thường, số và ký tự đặc biệt (@, #, $...)</small>
