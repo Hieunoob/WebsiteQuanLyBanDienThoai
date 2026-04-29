@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @extends('admin.dashboard')
 
 @section('content')
@@ -75,5 +76,70 @@
             </nav>
         </div>
     </div>
+=======
+@extends('layouts.admin')
+
+@section('title', 'Quản lý đơn hàng')
+
+@section('breadcrumb')
+    <li class="breadcrumb-item active">Đơn hàng</li>
+@endsection
+
+@section('content')
+<!-- Lọc theo trạng thái -->
+<div class="d-flex gap-2 mb-3 flex-wrap">
+    <a href="{{ route('admin.orders.index') }}" class="btn btn-sm {{ !request('status') ? 'btn-primary' : 'btn-outline-secondary' }}">Tất cả</a>
+    @foreach(\App\Models\Order::$statuses as $key => $label)
+    <a href="{{ route('admin.orders.index', ['status' => $key]) }}"
+       class="btn btn-sm {{ request('status') === $key ? 'btn-primary' : 'btn-outline-secondary' }}">
+        {{ $label }}
+        @php $cnt = \App\Models\Order::where('status', $key)->count(); @endphp
+        @if($cnt > 0)<span class="badge bg-danger ms-1">{{ $cnt }}</span>@endif
+    </a>
+    @endforeach
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>SĐT</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày đặt</th>
+                    <th class="text-end">Chi tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($orders as $order)
+                <tr>
+                    <td class="fw-bold">#{{ $order->id }}</td>
+                    <td>
+                        <div>{{ $order->customer_name }}</div>
+                        <div class="text-muted small">{{ $order->user->email ?? '' }}</div>
+                    </td>
+                    <td>{{ $order->phone }}</td>
+                    <td class="text-danger fw-semibold">{{ $order->formatted_total }}</td>
+                    <td><span class="badge bg-{{ $order->status_color }}">{{ $order->status_label }}</span></td>
+                    <td class="text-muted small">{{ $order->created_at->format('H:i d/m/Y') }}</td>
+                    <td class="text-end">
+                        <a href="{{ route('admin.orders.show', $order) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                @empty
+                <tr><td colspan="7" class="text-center text-muted py-4">Không có đơn hàng nào</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    @if($orders->hasPages())
+    <div class="card-footer bg-white">{{ $orders->appends(request()->query())->links() }}</div>
+    @endif
+>>>>>>> 3bcf823 (update giao diện admin)
 </div>
 @endsection
