@@ -11,7 +11,7 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::orderBy('id', 'asc')->get();
+        $categories = Category::withCount('products')->orderBy('name')->paginate(15);
         return view('admin.categories.index', compact('categories'));
     }
 
@@ -22,22 +22,22 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $slug = Str::slug($request->name);
         $request->validate([
-            'name' => 'required|unique:categories|max:255',
-        ],[
-        'name.unique' => 'Tên danh mục này đã tồn tại!',
-        ]);
-        
-        if (Category::where('slug', $slug)->exists()) {
-        return back()->withErrors(['name' => 'Tên này tạo ra đường dẫn đã trùng, hãy đổi tên khác.'])->withInput();
-    }
-        Category::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
+            'name'        => 'required|string|max:255|unique:categories,name',
+            'description' => 'nullable|string',
+        ], [
+            'name.required' => 'Vui lòng nhập tên danh mục.',
+            'name.unique'   => 'Tên danh mục đã tồn tại.',
         ]);
 
-        return redirect()->route('categories.index')->with('success', 'Tạo danh mục thành công!');
+        Category::create([
+            'name'        => $request->name,
+            'slug'        => Str::slug($request->name),
+            'description' => $request->description,
+        ]);
+
+        return redirect()->route('admin.categories.index')
+            ->with('success', 'Thêm danh mục thành công!');
     }
 
     public function edit(Category $category)
@@ -46,31 +46,29 @@ class CategoryController extends Controller
     }
 
     public function update(Request $request, Category $category)
-    {   
-        $slug = Str::slug($request->name);
+    {
         $request->validate([
-            'name' => 'required|max:255|unique:categories,name,' . $category->id,
-        ]);
-        
-        if (Category::where('slug', $slug)->where('id', '!=', $category->id)->exists()) {
-        return back()->withErrors(['name' => 'Tên này tạo ra đường dẫn đã trùng.'])->withInput();
-    }
-        $category->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
+            'name'        => 'required|string|max:255|unique:categories,name,' . $category->id,
+            'description' => 'nullable|string',
         ]);
 
-        return redirect()->route('categories.index')->with('success', 'Cập nhật thành công!');
+        $category->update([
+            'name'        => $request->name,
+            'slug'        => Str::slug($request->name),
+            'description' => $request->description,
+        ]);
+
+        return redirect()->route('admin.categories.index')
+            ->with('success', 'Cập nhật danh mục thành công!');
     }
 
     public function destroy(Category $category)
     {
-        // Kiểm tra nếu có sản phẩm thuộc danh mục này thì không cho xóa (tùy chọn)
-        if($category->products()->count() > 0) {
-            return back()->with('error', 'Không thể xóa danh mục đang có sản phẩm!');
+        if ($category->products()->count() > 0) {
+            return back()->with('error', 'Không thể xóa danh mục đang có sản phẩm.');
         }
-        
+
         $category->delete();
-        return redirect()->route('categories.index')->with('success', 'Đã xóa danh mục.');
+        return back()->with('success', 'Đã xóa danh mục.');
     }
 }

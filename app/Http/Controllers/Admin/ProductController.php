@@ -3,107 +3,96 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    // Hiển thị danh sách sản phẩm
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')->latest()->get();
+        $query = Product::with('category');
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        $products = $query->orderBy('created_at', 'desc')->paginate(15);
+
         return view('admin.products.index', compact('products'));
     }
 
-    // Form thêm sản phẩm
     public function create()
     {
-        $categories = Category::all();
+        $categories = Category::orderBy('name')->get();
         return view('admin.products.create', compact('categories'));
     }
 
-    // Lưu sản phẩm mới
     public function store(Request $request)
     {
-        $slug = Str::slug($request->name);
-        $request->validate([
-            'name' => 'required|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'price' => 'required|numeric|min:1000',
-            'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpg,png,jpeg,webp|max:2048'
-        ],[
-        // Thông báo lỗi tiếng Việt cho Hiếu dễ quản lý
-        'name.unique' => 'Tên sản phẩm này đã tồn tại trong hệ thống!',
-        'name.required' => 'Vui lòng nhập tên sản phẩm.',
-        'price.min' => 'Giá bán phải tối thiểu là 1.000 VNĐ!',
-        'stock.min' => 'Số lượng kho không được nhỏ hơn 0!',
-        'stock.integer' => 'Số lượng kho phải là số nguyên.',
-    ]);
-        if (Product::where('slug', $slug)->exists()) {
-        return back()->withErrors(['name' => 'Tên sản phẩm này đã tồn tại, vui lòng đổi tên khác một chút!'])->withInput();
-    }
-        $data = $request->all();
-        $data['slug'] = Str::slug($request->name);
+        $validated = $request->validate([
+            'name'             => 'required|string|max:255',
+            'category_id'      => 'required|exists:categories,id',
+            'brand'            => 'required|string|max:100',
+            'price'            => 'required|numeric|min:0',
+            'quantity'         => 'required|integer|min:0',
+            'description'      => 'nullable|string',
+            'image'            => 'nullable|string|max:500',
+            'screen'           => 'nullable|string|max:255',
+            'ram'              => 'nullable|string|max:100',
+            'storage'          => 'nullable|string|max:100',
+            'camera'           => 'nullable|string|max:255',
+            'battery'          => 'nullable|string|max:100',
+            'operating_system' => 'nullable|string|max:100',
+            'is_featured'      => 'nullable|boolean',
+        ]);
 
-        // Xử lý upload ảnh
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('products', 'public');
-        }
+        $validated['slug'] = Str::slug($validated['name']) . '-' . time();
+        $validated['is_featured'] = $request->boolean('is_featured');
 
-        Product::create($data);
+        Product::create($validated);
 
-        return redirect()->route('products.index')->with('success', 'Thêm sản phẩm thành công!');
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Thêm sản phẩm thành công!');
     }
 
-    // Xóa sản phẩm
+    public function edit(Product $product)
+    {
+        $categories = Category::orderBy('name')->get();
+        return view('admin.products.edit', compact('product', 'categories'));
+    }
+
+    public function update(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'name'             => 'required|string|max:255',
+            'category_id'      => 'required|exists:categories,id',
+            'brand'            => 'required|string|max:100',
+            'price'            => 'required|numeric|min:0',
+            'quantity'         => 'required|integer|min:0',
+            'description'      => 'nullable|string',
+            'image'            => 'nullable|string|max:500',
+            'screen'           => 'nullable|string|max:255',
+            'ram'              => 'nullable|string|max:100',
+            'storage'          => 'nullable|string|max:100',
+            'camera'           => 'nullable|string|max:255',
+            'battery'          => 'nullable|string|max:100',
+            'operating_system' => 'nullable|string|max:100',
+            'is_featured'      => 'nullable|boolean',
+        ]);
+
+        $validated['is_featured'] = $request->boolean('is_featured');
+
+        $product->update($validated);
+
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Cập nhật sản phẩm thành công!');
+    }
+
     public function destroy(Product $product)
     {
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
-        }
         $product->delete();
-        return redirect()->route('products.index')->with('success', 'Đã xóa sản phẩm.');
+        return back()->with('success', 'Đã xóa sản phẩm.');
     }
-    // Form chỉnh sửa
-public function edit(Product $product)
-{
-    $categories = Category::all();
-    return view('admin.products.edit', compact('product', 'categories'));
-}
-
-// Xử lý cập nhật
-public function update(Request $request, Product $product)
-{
-    $request->validate([
-        'name' => 'required|max:255|unique:products,name,' . $product->id,
-        'category_id' => 'required|exists:categories,id',
-        'price' => 'required|numeric|min:1000',
-        'stock' => 'required|integer',
-        'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2048'
-    ]);
-
-    $data = $request->all();
-    $data['slug'] = Str::slug($request->name);
-
-    // Xử lý ảnh nếu người dùng upload ảnh mới
-    if ($request->hasFile('image')) {
-        // Xóa ảnh cũ nếu có để tránh rác server
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
-        }
-        // Lưu ảnh mới
-        $data['image'] = $request->file('image')->store('products', 'public');
-    } else {
-        // Nếu không chọn ảnh mới, giữ lại tên ảnh cũ
-        $data['image'] = $product->image;
-    }
-
-    $product->update($data);
-
-    return redirect()->route('products.index')->with('success', 'Cập nhật sản phẩm thành công!');
-}
 }

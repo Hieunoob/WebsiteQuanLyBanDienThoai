@@ -1,75 +1,74 @@
 <?php
 
-namespace App\Http\Controllers\Customer;
-
-use App\Http\Controllers\Controller; // Dòng này để kế thừa từ file Controller gốc bên ngoài
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\ProductController as AdminProductController;
-use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
-use App\Http\Controllers\Customer\ProductController;
-use App\Http\Controllers\Customer\CartController;
-use App\Http\Controllers\Customer\OrderController;
-use App\Http\Controllers\Customer\AuthController;
-use App\Models\Product;
-use App\Models\Category;
-use App\Models\User;
-use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
+use Illuminate\Support\Facades\Route;
 
-// --- NHÓM ROUTE CHO ADMIN ---
+// =============================================
+// ROUTES PHÍA NGƯỜI DÙNG
+// =============================================
 
-Route::prefix('admin')->middleware('admin')->group(function () {
-    Route::get('/', function () {
-        $productCount = \App\Models\Product::count();
-        $categoryCount = \App\Models\Category::count();
-        $userCount = \App\Models\User::count();
-        $orderCount = \App\Http\Models\Order::count();
-        $categories = \App\Models\Category::withCount('products')->get();
-        $chartLabels = $categories->pluck('name'); 
-        $chartData = $categories->pluck('products_count'); 
+// Trang chủ
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-        return view('admin.dashboard', compact('productCount', 'categoryCount','userCount','orderCount','chartLabels','chartData'));
-    })->name('admin.dashboard');
+// Sản phẩm
+Route::get('/san-pham', [ProductController::class, 'index'])->name('products.index');
+Route::get('/san-pham/{slug}', [ProductController::class, 'show'])->name('products.show');
 
-    Route::resource('products', AdminProductController::class);
-    Route::resource('categories', CategoryController::class);
-    Route::resource('users', UserController::class);
-    Route::resource('orders', AdminOrderController::class);
-    Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+// Giỏ hàng (không cần đăng nhập)
+Route::get('/gio-hang', [CartController::class, 'index'])->name('cart.index');
+Route::post('/gio-hang/them/{productId}', [CartController::class, 'add'])->name('cart.add');
+Route::post('/gio-hang/cap-nhat/{productId}', [CartController::class, 'update'])->name('cart.update');
+Route::delete('/gio-hang/xoa/{productId}', [CartController::class, 'remove'])->name('cart.remove');
+
+// Auth
+Route::middleware('guest')->group(function () {
+    Route::get('/dang-ky', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/dang-ky', [AuthController::class, 'register']);
+
+    Route::get('/dang-nhap', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/dang-nhap', [AuthController::class, 'login']);
 });
 
-// --- NHÓM ROUTE CHO KHÁCH HÀNG (NGOÀI AUTH) ---
-// Trang chủ dành cho mọi người xem sản phẩm
-Route::get('/', [ProductController::class, 'index'])->name('customer.home');
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
-Route::get('/search', [ProductController::class, 'search'])->name('search');
-Route::get('/about', function () { return view('customer.about'); })->name('about');
+Route::post('/dang-xuat', [AuthController::class, 'logout'])->name('logout');
 
-// --- XÁC THỰC ---
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-// --- NHÓM YÊU CẦU ĐĂNG NHẬP ---
+// Đặt hàng và lịch sử (yêu cầu đăng nhập)
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', function () { return view('customer.profile'); })->name('profile');
-    Route::post('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/dat-hang', [OrderController::class, 'checkout'])->name('checkout');
+    Route::post('/dat-hang', [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/dat-hang/thanh-cong', [OrderController::class, 'success'])->name('orders.success');
+    Route::get('/lich-su-don-hang', [OrderController::class, 'history'])->name('orders.history');
+    Route::get('/don-hang/{id}', [OrderController::class, 'show'])->name('orders.show');
+});
 
-    // Đổi tên trang dashboard này thành 'customer.dashboard' để không trùng với trang chủ
-    Route::get('/dashboard', function () {
-        return view('customer.home'); 
-    })->name('customer.dashboard'); 
+// =============================================
+// ROUTES PHÍA ADMIN (yêu cầu đăng nhập + quyền admin)
+// =============================================
 
-    // Giỏ hàng & Đơn hàng
-    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-    Route::post('/add-to-cart/{id}', [CartController::class, 'add'])->name('cart.add');
-    Route::get('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
-    Route::post('/checkout', [OrderController::class, 'checkout'])->name('checkout');
-    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    // Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Quản lý sản phẩm (không cần trang show riêng)
+    Route::resource('products', AdminProductController::class)->except(['show']);
+
+    // Quản lý danh mục (không cần trang show riêng)
+    Route::resource('categories', AdminCategoryController::class)->except(['show']);
+
+    // Quản lý đơn hàng
+    Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+
+    // Quản lý người dùng
+    Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::patch('users/{user}/toggle-role', [AdminUserController::class, 'toggleRole'])->name('users.toggleRole');
 });

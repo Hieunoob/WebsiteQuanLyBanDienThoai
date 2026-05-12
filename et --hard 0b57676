@@ -1,0 +1,13 @@
+[33m3a61859[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{0}: commit: Update controller admin
+[33m3bcf823[m HEAD@{1}: reset: moving to HEAD
+[33m3bcf823[m HEAD@{2}: rebase (abort): returning to refs/heads/main
+[33m3bcf823[m HEAD@{3}: rebase (abort): returning to refs/heads/main
+[33m987e94e[m HEAD@{4}: reset: moving to HEAD
+[33m987e94e[m HEAD@{5}: reset: moving to 987e94e
+[33m3bcf823[m HEAD@{6}: checkout: moving from 987e94e752c3a24eaa4201fac4ee816be99b4232 to main
+[33m987e94e[m HEAD@{7}: commit: update giao diện admin
+[33m0b57676[m HEAD@{8}: pull origin main --rebase (start): checkout 0b57676b226368f62b4d0a81950c6d1fefbb0acd
+[33m3bcf823[m HEAD@{9}: reset: moving to HEAD
+[33m3bcf823[m HEAD@{10}: Branch: renamed refs/heads/main to refs/heads/main
+[33m3bcf823[m HEAD@{12}: Branch: renamed refs/heads/master to refs/heads/main
+[33m3bcf823[m HEAD@{14}: commit (initial): update giao diện admin
